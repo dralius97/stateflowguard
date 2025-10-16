@@ -5,7 +5,7 @@ export class Helpers {
         return Object.prototype.toString.call(obj) === '[object Object]'
     }
     public hash(str: string): string {
-        const hash = crypto.createHash("sha1").update(str).digest("hex");
+        const hash = crypto.createHash("sha256").update(str).digest("hex");
         return hash
     }
     public cannonizeObject(obj: Record<string, unknown>): Record<string, unknown> {
