@@ -5,19 +5,25 @@
   "license": "ISC",
   "author": "Candra Julius",
   "type": "commonjs",
-  "main": "./dist/main.js",
+  "main": "./dist/main.cjs",
+  "module": "./dist/main.mjs",
   "types": "./dist/main.d.ts",
   "scripts": {
     "dev": "nodemon --exec  \"npx ts-node\" src/main.ts",
     "start": "tsc && node src/main.ts",
     "test": "vitest",
-    "build": "tsup src/main.ts --format esm,cjs --dts"
+    "build": "rollup -c"
   },
   "devDependencies": {
+    "@rollup/plugin-commonjs": "^28.0.8",
+    "@rollup/plugin-node-resolve": "^16.0.3",
+    "@rollup/plugin-typescript": "^12.1.4",
     "@types/express": "^5.0.3",
     "@types/node": "^24.7.1",
     "nodemon": "^3.1.10",
+    "rollup": "^4.52.4",
     "ts-node": "^10.9.2",
+    "tslib": "^2.8.1",
     "typescript": "^5.9.3",
     "vitest": "^3.2.4"
   }
