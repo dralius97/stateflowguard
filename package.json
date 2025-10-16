@@ -1,0 +1,24 @@
+{
+  "name": "fsm",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "Candra Julius",
+  "type": "commonjs",
+  "main": "./dist/main.js",
+  "types": "./dist/main.d.ts",
+  "scripts": {
+    "dev": "nodemon --exec  \"npx ts-node\" src/main.ts",
+    "start": "tsc && node src/main.ts",
+    "test": "vitest",
+    "build": "tsup src/main.ts --format esm,cjs --dts"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.7.1",
+    "nodemon": "^3.1.10",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}
