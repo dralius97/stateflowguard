@@ -1,7 +1,0 @@
-src/
-tests/
-.gitignore
-package-lock.json
-rollup.config.mjs
-tsconfig.json
-node_modules
