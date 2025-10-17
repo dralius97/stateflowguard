@@ -1,12 +1,12 @@
 # stateflowguard
 
-stateflowguard adalah implementasi Finite State Machine (FSM) yang stateless dengan dukungan validasi skema menggunakan Zod. Library ini memungkinkan Anda untuk mendefinisikan transisi state dengan guard conditions yang fleksibel.
+stateflowguard adalah implementasi Finite State Machine (FSM)
 
 ## Fitur
 
 - **Stateless**: Tidak menyimpan state internal, cocok untuk arsitektur distributed
 - **Stateless**: Tidak menyimpan state internal, cocok untuk arsitektur distributed
-- **Validasi Skema**: Validasi otomatis menggunakan Zod
+- **Validasi Skema**: Validasi otomatis
 - **Guard Conditions**: Mendukung state guard dan event guard
 - **Mode Fleksibel**: Pilih antara mode `strict` atau `loose`
 - **Type-Safe**: Full TypeScript support
@@ -29,14 +29,14 @@ const trafficLightSchema = {
         to: "green",
         eventGuard: {
           allow: {
-            time: { value: "day", mode: "equal" }
+            time: { value: ["day"], mode: "equal" }
           }
         }
       }
     },
     stateguard: {
       allow: {
-        power: { value: "on", mode: "equal" }
+        power: { value: ["on"], mode: "equal" }
       }
     }
   },
@@ -46,7 +46,7 @@ const trafficLightSchema = {
         to: "yellow",
         eventGuard: {
           allow: {
-            manual: { value: false, mode: "equal" }
+            manual: { value: [false], mode: "equal" }
           }
         }
       }
@@ -110,7 +110,7 @@ const result = fsm.transition({
 ```typescript
 {
   [key: string]: {
-    value: any,                      // Nilai yang akan dibandingkan
+    value: any[],                      // Nilai yang akan dibandingkan
     mode: 'equal' | 'intersect' | 'subset'  // Mode perbandingan
   }
 }
@@ -122,7 +122,7 @@ const result = fsm.transition({
 Membandingkan nilai secara strict equality
 ```typescript
 allow: {
-  status: { value: "active", mode: "equal" }
+  status: { value: ["active"], mode: "equal" }
 }
 // Hanya cocok jika status === "active"
 ```
@@ -160,7 +160,7 @@ const approvalSchema = {
             userRole: { value: ["author", "editor"], mode: "intersect" }
           },
           not: {
-            status: { value: "locked", mode: "equal" }
+            status: { value: ["locked"], mode: "equal" }
           }
         }
       }
