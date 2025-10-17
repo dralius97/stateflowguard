@@ -14,21 +14,14 @@ export class StatelessFSM<T extends StatelessSchema> extends EventEmitter {
     private validator: Validator | null
     private cannonizer: Cannonizer | null
     private executionMode: ExecutionMode
-    constructor(schema: T,
-        {
-            mode = 'loose',
-            useCache = false,
-            cacheDuration = 10000,
-            cacheLimit = 10,
-            executionMode = 'deep'
-        }: Option) {
+    constructor(schema: T, option?: Option) {
         super(schema)
-        this.mode = mode
-        this.cache = useCache ? new FSMCache(cacheLimit, cacheDuration) : null
+        this.mode = option?.mode || 'loose'
+        this.cache = option?.useCache ? new FSMCache(option.cacheLimit || 10, option.cacheDuration || 10000) : null
         this.cannonizer = new Cannonizer()
         this.common = new Helpers()
-        this.validator = mode == 'strict' ? new Validator() : null
-        this.executionMode = executionMode
+        this.validator = option?.mode == 'strict' ? new Validator() : null
+        this.executionMode = option?.executionMode || 'deep'
         this.FSMCore = this.init(schema)
     }
     private init(schema: T): FSMCore<T> {
@@ -39,7 +32,7 @@ export class StatelessFSM<T extends StatelessSchema> extends EventEmitter {
 
         let useHash = false
         let guardMap = undefined
-        if(this.executionMode !=  'deep'){
+        if (this.executionMode != 'deep') {
             if (!this.cannonizer) throw new FSMError('UNEXPECTED_ERROR', 'UNEXPECTED_ERROR', 'cannonizer is missing');
             guardMap = this.cannonizer.cannonize(schema);
             useHash = true
@@ -74,15 +67,16 @@ export class StatelessFSM<T extends StatelessSchema> extends EventEmitter {
                 };
                 setCache = true
             }
-            let result = this.FSMCore.start(currState, ctx)
-            const doFallback = !result.isValid && ('FALLBACK' in this.FSMCore.transition[currState].transition)
+            let result = this.FSMCore.start(currState as string, ctx)
+            const transitionDef = this.FSMCore.transition[currState]
+            const doFallback = typeof transitionDef !== 'string'  && !result.isValid && ('FALLBACK' in transitionDef.transition)
             if (doFallback) {
                 this.emit('onFallback', {
                     ...ctx,
                     ...result,
                     currentState: currState
                 })
-                result = this.FSMCore.start(currState, { event: 'FALLBACK', eventContext: ctx.eventContext, stateContext: ctx.stateContext })
+                result = this.FSMCore.start(currState as string, { event: 'FALLBACK', eventContext: ctx.eventContext, stateContext: ctx.stateContext })
             }
             this.emit(result.isValid ? 'success' : 'invalid', {
                 ...ctx,

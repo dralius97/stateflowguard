@@ -85,8 +85,8 @@ export class FSMCore<T extends StatelessSchema> {
   }
   private evaluateRequest(currState: keyof T, event: string, stateGuard?: Record<string, unknown>, eventGuard?: Record<string, unknown>): TransitionResult {
     const curr = this.transition[currState]
+    if( curr === 'FINAL' ) return { isValid: false, message: 'Current state is FINAL', reason: `event '${event}' is FINAL state cannot be changed`, code: 'FINAL_STATE' }
     if (!curr) return { isValid: false, message: 'state invalid', reason: `state '${String(currState)}' not found`, code: 'VALIDATION_ERROR' }
-
     const evt = curr.transition[event]
     let validEvent = event
     if (!evt) {
@@ -98,11 +98,11 @@ export class FSMCore<T extends StatelessSchema> {
     if (!stateGuardResult.isValid) return stateGuardResult
     const eventGuardResult = this.evaluateGuard(curr.transition[validEvent].eventGuard, eventGuard || {})
     if (!eventGuardResult.isValid) return eventGuardResult
-    const nextValue = this.transition[currState].transition[validEvent].to
+    const nextValue = curr.transition[validEvent].to
     return { isValid: true, message: 'Transition_Allowed', next: nextValue }
   }
 
-  public start<K extends keyof T>(currState: K, ctx: Context & { event: EventOfStateless<T, K> })
+  public start(currState: string, ctx: Context)
     : TransitionResult {
     const result = this.useHash ?
       this.hashBasedEvaluateRequest(currState, ctx.event, ctx.stateContext, ctx.eventContext) :
@@ -118,6 +118,7 @@ export class FSMCore<T extends StatelessSchema> {
 
   private hashBasedEvaluateRequest(currState: keyof T, event: string, stateGuard?: Record<string, unknown>, eventGuard?: Record<string, unknown>): TransitionResult {
     const curr = this.transition[currState]
+    if( curr === 'FINAL' ) return { isValid: false, message: 'Current state is FINAL', reason: `event '${event}' is FINAL state cannot be changed`, code: 'FINAL_STATE' }
     if (!curr) return { isValid: false, message: 'state invalid', reason: `state '${String(currState)}' not found`, code: 'VALIDATION_ERROR' }
 
     const evt = curr.transition[event]
@@ -138,7 +139,7 @@ export class FSMCore<T extends StatelessSchema> {
     }
     const guardValidationResult = this.hashBasedEvaluateGuard(ctxMap, currState as string, validEvent)
     if (!guardValidationResult.isValid) return guardValidationResult
-    const nextValue = this.transition[currState].transition[validEvent].to
+    const nextValue = curr.transition[validEvent].to
     return { isValid: true, message: 'Transition_Allowed', next: nextValue }
   }
 

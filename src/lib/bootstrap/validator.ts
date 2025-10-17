@@ -25,6 +25,7 @@ export class Validator {
     }
     // validate state
     for (const key in schema) {
+      if(schema[key] === 'FINAL') continue;
       const schemaNode = schema[key] as StateNode
       const transition = schemaNode['transition']
       const stateGuard = schemaNode['stateGuard']

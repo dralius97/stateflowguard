@@ -1,5 +1,5 @@
 import EventEmitter from "node:events";
-import { Context, ExecutionMode, Mode, StatefulOption, StatefulSchema, StateHistory, TransitionResult } from "../../types"
+import { AllEventsOf, Context, EventOfStateless, ExecutionMode, Mode, StatefulOption, StatefulSchema, StateHistory, TransitionResult } from "../../types"
 import { FSMCore } from "../core/fsmcore"
 import { FSMError } from "../../error"
 import { FSMCache } from "../cache/cache";
@@ -17,26 +17,17 @@ export class StatefulFSM<T extends StatefulSchema['state']> extends EventEmitter
     private validator: Validator | null
     private cannonizer: Cannonizer | null
     private executionMode: ExecutionMode
-    constructor(
-        schema: { initial: string, state: T },
-        {
-            mode = 'loose',
-            historyLength = 10,
-            useCache = false,
-            cacheDuration = 10000,
-            cacheLimit = 10,
-            executionMode = 'deep'
-        }: StatefulOption) {
+    constructor(schema: { initial: string, state: T }, option?: StatefulOption) {
         super()
-        this.mode = mode
-        this.historyMaxLength = Math.min(historyLength, 100)
+        this.mode = option?.mode || 'loose'
+        this.historyMaxLength = Math.min(option?.historyLength || 10, 100)
         this.currentState = schema.initial
         this.stateHistory = [{ state: schema.initial, fromEvent: 'initial' }]
         this.cannonizer = new Cannonizer()
-        this.cache = useCache ? new FSMCache(cacheLimit, cacheDuration) : null
+        this.cache = option?.useCache ? new FSMCache(option?.cacheLimit || 10, option.cacheDuration || 10000) : null
         this.common = new Helpers()
-        this.validator = mode == 'strict' ? new Validator() : null
-        this.executionMode = executionMode
+        this.validator = option?.mode == 'strict' ? new Validator() : null
+        this.executionMode = option?.executionMode || 'deep'
         this.FSMCore = this.init(schema)
     }
 
@@ -66,7 +57,7 @@ export class StatefulFSM<T extends StatefulSchema['state']> extends EventEmitter
         this.cannonizer = null
         return new FSMCore(schema.state, guardMap, useHash);
     }
-    public validate(ctx: Context)
+    public validate<K extends T>(ctx: Context & { event: AllEventsOf<T> })
         : TransitionResult {
         try {
             if (this.mode === 'strict') this.requestValidator(ctx);
@@ -91,9 +82,10 @@ export class StatefulFSM<T extends StatefulSchema['state']> extends EventEmitter
             let result = this.FSMCore.start(this.currentState, ctx);
             if (result.isValid && result.next) {
                 this.currentState = result.next;
-                this.insertHistory(result,ctx)
+                this.insertHistory(result, ctx)
             }
-            const doFallback = !result.isValid && ('FALLBACK' in this.FSMCore.transition[this.currentState].transition)
+            const transitionDef = this.FSMCore.transition[this.currentState]
+            const doFallback = typeof transitionDef !== 'string'  && !result.isValid && ('FALLBACK' in transitionDef.transition)
             if (doFallback) {
                 this.emit('onFallback', {
                     ...ctx,
@@ -105,7 +97,7 @@ export class StatefulFSM<T extends StatefulSchema['state']> extends EventEmitter
                 result = this.FSMCore.start(this.currentState, { event: 'FALLBACK', eventContext: ctx.eventContext, stateContext: ctx.stateContext })
                 if (result.isValid && result.next) {
                     this.currentState = result.next;
-                    this.insertHistory(result,ctx, fallbackReason)
+                    this.insertHistory(result, ctx, fallbackReason)
                 }
             }
 
@@ -126,9 +118,9 @@ export class StatefulFSM<T extends StatefulSchema['state']> extends EventEmitter
             throw new FSMError('Unexpected_Error', 'UNEXPECTED_ERROR', error)
         }
     }
-    private insertHistory(result:TransitionResult, ctx:Context, fallbackReason?:string) {
-            this.stateHistory.push({ state: result.next!, fromEvent: ctx.event, fallbackReason })
-            if (this.stateHistory.length > this.historyMaxLength) this.stateHistory.shift()
+    private insertHistory(result: TransitionResult, ctx: Context, fallbackReason?: string) {
+        this.stateHistory.push({ state: result.next!, fromEvent: ctx.event, fallbackReason })
+        if (this.stateHistory.length > this.historyMaxLength) this.stateHistory.shift()
 
     }
     public history() {

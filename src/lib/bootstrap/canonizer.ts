@@ -10,6 +10,7 @@ export class Cannonizer {
     }
     public cannonize(schema: StatelessSchema) {
         for (const state in schema) {
+            if(schema[state] === 'FINAL') continue
             const stateNode = schema[state].transition as StateTransitions
             const stateGuard = schema[state].stateGuard
             const statePath: Map<string, Set<string>> = stateGuard ? this.guardCannonizer(stateGuard, `SG`) : new Map()

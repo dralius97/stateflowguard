@@ -1,13 +1,14 @@
 export type GuardMode = 'equal' | 'intersect' | 'subset'
-export type EventOfStateless<S extends StatelessSchema, K extends keyof S> = keyof S[K]['transition']
+export type EventOfStateless<S extends StatelessSchema, K extends keyof S> = S[K] extends StateNode? S[K]['transition'] : never  
+export type AllEventsOf<T extends Record<string, any>> = { [K in keyof T]: keyof T[K]['transition'] }[keyof T];
 export type StateTransitions = Record<string, { to: string; eventGuard?: Guard; }>
-export type ErrorType = 'VALIDATION_ERROR' | 'SCHEMA_ERROR' | 'UNEXPECTED_ERROR' | 'REQUEST_ERROR' | 'PLACEHOLDER'
+export type ErrorType = 'VALIDATION_ERROR' | 'SCHEMA_ERROR' | 'UNEXPECTED_ERROR' | 'REQUEST_ERROR' | 'PLACEHOLDER' | 'FINAL_STATE'
 export type StateNode = {
     transition: StateTransitions
     stateGuard?: Guard,
     failMessage?: string
 }
-export type StatelessSchema = Record<string, StateNode>
+export type StatelessSchema = Record<string, StateNode | 'FINAL' >
 export type StatefulSchema = { initial: string, state: StatelessSchema }
 export type GuardRecord = {
     value: unknown[],
