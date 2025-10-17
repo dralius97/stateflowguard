@@ -93,4 +93,7 @@ export class StatelessFSM<T extends StatelessSchema> extends EventEmitter {
             throw new FSMError('Unexpected_Error', 'UNEXPECTED_ERROR', error)
         }
     }
+    public getSchema() {
+        return this.FSMCore.transition
+    }
 }

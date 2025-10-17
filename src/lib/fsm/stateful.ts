@@ -121,7 +121,10 @@ export class StatefulFSM<T extends StatefulSchema['state']> extends EventEmitter
     private insertHistory(result: TransitionResult, ctx: Context, fallbackReason?: string) {
         this.stateHistory.push({ state: result.next!, fromEvent: ctx.event, fallbackReason })
         if (this.stateHistory.length > this.historyMaxLength) this.stateHistory.shift()
+    }
 
+    public getSchema() {
+        return this.FSMCore.transition
     }
     public history() {
         return this.stateHistory
