@@ -1,23 +1,30 @@
-# stateflowguard
+# StateFlowGuard
 
-[![npm version](https://img.shields.io/npm/v/stateflowguard.svg)](https://www.npmjs.com/package/stateflowguard)
-[![GitHub](https://img.shields.io/badge/github-dralius97/stateflowguard-blue)](https://github.com/dralius97/stateflowguard)
-[![License: ISC](https://img.shields.io/badge/License-ISC-green.svg)](LICENSE)
-
-**stateflowguard** adalah implementasi **Finite State Machine (FSM)** yang mendukung **guard validation**, **type safety**, dan **mode fleksibel** (strict/loose).
+StateFlowGuard is a lightweight, schema-driven finite state machine (FSM) engine built for Node.js and TypeScript.  
+It supports both **stateless** and **stateful** FSM models, with optional caching and validation layers for optimized control flow management.
 
 ---
 
-## Fitur
+## Features
 
-- **Validasi Skema Otomatis** — Cegah kesalahan definisi state sejak inisialisasi.  
-- **Guard Conditions** — Mendukung `stateGuard` dan `eventGuard`.  
-- **Mode Fleksibel** — Pilih antara `strict` (validasi penuh) atau `loose` (lebih ringan).  
-- **Type-Safe** — Dibangun sepenuhnya dengan TypeScript.  
+- **Stateless and Stateful Modes**  
+  Choose between simple, immutable FSMs or persistent stateful machines.
+
+- **Strict Schema Validation**  
+  Ensures FSM definitions are type-safe and structurally consistent.
+
+- **Cache Integration**  
+  Avoid redundant transitions and speed up repeated state evaluations.
+
+- **Flexible Validation Modes**  
+  Switch between hash-based or deep structural validation for optimal performance.
+
+- **Typed Event System**  
+  Strongly typed transitions and contextual guards to prevent invalid transitions at compile time.
 
 ---
 
-## Instalasi
+## Installation
 
 ```bash
 npm install stateflowguard
@@ -25,245 +32,84 @@ npm install stateflowguard
 
 ---
 
-## 🚦 Penggunaan Dasar
+## Basic Usage
 
-### 1. Definisikan State Schema
+```ts
+import { StateFlowGuard } from "stateflowguard";
 
-```typescript
-const trafficLightSchema = {
-  red: {
-    transition: {
-      NEXT: {
-        to: "green",
-        eventGuard: {
-          allow: {
-            time: { value: ["day"], mode: "equal" }
-          }
-        }
-      }
-    },
-    stateguard: {
-      allow: {
-        power: { value: ["on"], mode: "equal" }
-      }
-    }
-  },
-  green: {
-    transition: {
-      NEXT: {
-        to: "yellow",
-        eventGuard: {
-          allow: {
-            manual: { value: [false], mode: "equal" }
-          }
-        }
-      }
-    }
-  },
-  yellow: {
-    transition: {
-      NEXT: { to: "red" }
-    }
-  }
-}
-```
-
-### 2. Inisialisasi FSM
-
-```typescript
-import { StatelessFSM } from "stateflowguard"
-
-const fsm = new StatelessFSM(trafficLightSchema, { mode: 'loose' })
-const strictFsm = new StatelessFSM(trafficLightSchema, { mode: 'strict' })
-```
-
-### 3. Gunakan FSM
-
-```typescript
-const result = fsm.transition({
-  event: "NEXT",
-  stateContext: { power: "on" },
-  eventContext: { time: "day" }
-})
-```
-
----
-
-## Struktur Schema
-
-### State Node
-
-```typescript
-{
-  transition: {
-    [eventName: string]: {
-      to: string,
-      eventGuard?: {
-        allow?: { ... },
-        not?: { ... }
-      }
-    }
-  },
-  stateguard?: {
-    allow?: { ... },
-    not?: { ... }
-  }
-}
-```
-
-### Guard Record
-
-```typescript
-{
-  [key: string]: {
-    value: any[],
-    mode: 'equal' | 'intersect' | 'subset'
-  }
-}
-```
-
----
-
-## Guard Modes
-
-### 1. `equal`
-```typescript
-allow: {
-  status: { value: ["active"], mode: "equal" }
-}
-```
-
-### 2. `intersect`
-```typescript
-allow: {
-  roles: { value: ["admin", "editor"], mode: "intersect" }
-}
-```
-
-### 3. `subset`
-```typescript
-allow: {
-  permissions: { value: ["read", "write", "delete"], mode: "subset" }
-}
-```
-
----
-
-## Contoh Penggunaan Lanjutan
-
-```typescript
-const approvalSchema = {
-  draft: {
-    transition: {
-      SUBMIT: {
-        to: "pending",
-        eventGuard: {
-          allow: {
-            userRole: { value: ["author", "editor"], mode: "intersect" }
-          },
-          not: {
-            status: { value: ["locked"], mode: "equal" }
-          }
-        }
-      }
-    }
-  },
-  pending: {
-    transition: {
-      APPROVE: {
-        to: "approved",
-        eventGuard: {
-          allow: {
-            userRole: { value: ["admin", "manager"], mode: "intersect" }
-          }
-        }
+// Define FSM schema
+const machine = new StateFlowGuard({
+  initial: "idle",
+  schema: {
+    idle: {
+      transition: {
+        START: { to: "running" },
       },
-      REJECT: {
-        to: "draft",
-        eventGuard: {
-          allow: {
-            userRole: { value: ["admin", "manager"], mode: "intersect" }
-          }
-        }
-      }
     },
-    stateguard: {
-      not: {
-        archived: { value: true, mode: "equal" }
-      }
-    }
+    running: {
+      transition: {
+        STOP: { to: "idle" },
+      },
+    },
+    FINAL: "FINAL",
   },
-  approved: {
-    transition: {
-      PUBLISH: {
-        to: "published",
-        eventGuard: {
-          allow: {
-            userRole: { value: ["admin"], mode: "equal" }
-          }
-        }
-      }
-    }
-  },
-  published: { transition: {} }
-}
+});
 
-const fsm = new StatelessFSM(approvalSchema, { mode: 'strict' })
+// Start validation
+const result = machine.validate({ event: "START", eventContext: {}, stateContext: {} });
+console.log(result);
 ```
 
 ---
 
-## Mode Operasi
+## Advanced Options
 
-| Mode | Deskripsi | Kegunaan |
-|------|------------|----------|
-| **Loose (default)** | Tidak validasi schema, cepat & fleksibel | Cocok untuk development |
-| **Strict** | Validasi schema penuh di awal | Cocok untuk production |
+### Validation Engine Mode
 
----
+During initialization, you can configure how validation is handled:
 
-## API Reference
-
-### Constructor
-
-```typescript
-constructor(transition: T, options?: { mode?: 'strict' | 'loose' })
+```ts
+const fsm = new StateFlowGuard({
+  mode: "strict", // or "loose"
+  validationEngine: "hash", // or "deep"
+});
 ```
 
-### Methods
+| Option              | Description |
+|----------------------|-------------|
+| `mode: "strict"`     | Enforces schema validation for every transition. |
+| `mode: "loose"`      | Skips schema validation for faster execution. |
+| `validationEngine: "hash"` | Uses SHA1 or SHA256-based hashing for structure validation. |
+| `validationEngine: "deep"` | Performs recursive object comparison for accuracy. |
 
-```typescript
-transition(request: {
-  event: string,
-  stateContext?: Record<string, any>,
-  eventContext?: Record<string, any>
-})
+---
+
+## Caching Layer
+
+The cache sits **before** FSMCore execution, storing previously validated transitions to prevent redundant computation.
+
+```ts
+fsm.cache.set({ state: "idle", event: "START" }, { isValid: true, next: "running" });
 ```
 
 ---
 
-## Best Practices
+## Error Handling
 
-1. Gunakan **Strict Mode** di production.  
-2. Definisikan **guard** secara eksplisit dan jelas.  
-3. Dokumentasikan setiap **state & transition**.  
-4. Pisahkan **business logic** dari guard.  
-5. **Uji semua path transisi** menggunakan unit test.  
+The FSM emits structured errors using `FSMError`:
 
----
-
-## License
-
-Licensed under the [ISC License](LICENSE).
-
----
-
-## Contributing
-
-Kontribusi sangat disambut!  
-Silakan buka [Pull Request](https://github.com/dralius97/stateflowguard/pulls) atau laporkan issue di [GitHub](https://github.com/dralius97/stateflowguard/issues).
+| Type | Meaning |
+|-------|----------|
+| `VALIDATION_ERROR` | Schema or event validation failed. |
+| `SCHEMA_ERROR` | Schema definition is invalid. |
+| `UNEXPECTED_ERROR` | Unexpected runtime failure. |
+| `REQUEST_ERROR` | External input or dependency error. |
+| `PLACEHOLDER` | Internal placeholder for fallback. |
+| `FINAL_STATE` | Reached terminal state. |
 
 ---
 
-### Repository
-➡️ [https://github.com/dralius97/stateflowguard](https://github.com/dralius97/stateflowguard)
+## Repository
+
+For complete documentation and examples, visit the GitHub repository:  
+[https://github.com/dralius97/stateflowguard](https://github.com/dralius97/stateflowguard)
