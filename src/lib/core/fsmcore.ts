@@ -107,7 +107,7 @@ export class FSMCore<T extends StatelessSchema> {
     const result = this.useHash ?
       this.hashBasedEvaluateRequest(currState, ctx.event, ctx.stateContext, ctx.eventContext) :
       this.evaluateRequest(currState, ctx.event, ctx.stateContext, ctx.eventContext)
-    if (!result.isValid && result.code !== 'VALIDATION_ERROR') throw new FSMError(result.message, 'UNEXPECTED_ERROR', ctx)
+    if (!result.isValid && (result.code !== 'VALIDATION_ERROR' && result.code !== 'FINAL_STATE')) throw new FSMError(result.message, 'UNEXPECTED_ERROR', ctx)
     return result
   }
 
