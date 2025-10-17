@@ -1,15 +1,21 @@
 # stateflowguard
 
-stateflowguard adalah implementasi Finite State Machine (FSM)
+[![npm version](https://img.shields.io/npm/v/stateflowguard.svg)](https://www.npmjs.com/package/stateflowguard)
+[![GitHub](https://img.shields.io/badge/github-dralius97/stateflowguard-blue)](https://github.com/dralius97/stateflowguard)
+[![License: ISC](https://img.shields.io/badge/License-ISC-green.svg)](LICENSE)
+
+**stateflowguard** adalah implementasi **Finite State Machine (FSM)** yang mendukung **guard validation**, **type safety**, dan **mode fleksibel** (strict/loose).
+
+---
 
 ## Fitur
 
-- **Stateless**: Tidak menyimpan state internal, cocok untuk arsitektur distributed
-- **Stateless**: Tidak menyimpan state internal, cocok untuk arsitektur distributed
-- **Validasi Skema**: Validasi otomatis
-- **Guard Conditions**: Mendukung state guard dan event guard
-- **Mode Fleksibel**: Pilih antara mode `strict` atau `loose`
-- **Type-Safe**: Full TypeScript support
+- **Validasi Skema Otomatis** — Cegah kesalahan definisi state sejak inisialisasi.  
+- **Guard Conditions** — Mendukung `stateGuard` dan `eventGuard`.  
+- **Mode Fleksibel** — Pilih antara `strict` (validasi penuh) atau `loose` (lebih ringan).  
+- **Type-Safe** — Dibangun sepenuhnya dengan TypeScript.  
+
+---
 
 ## Instalasi
 
@@ -17,7 +23,9 @@ stateflowguard adalah implementasi Finite State Machine (FSM)
 npm install stateflowguard
 ```
 
-## Penggunaan Dasar
+---
+
+## 🚦 Penggunaan Dasar
 
 ### 1. Definisikan State Schema
 
@@ -54,9 +62,7 @@ const trafficLightSchema = {
   },
   yellow: {
     transition: {
-      NEXT: {
-        to: "red"
-      }
+      NEXT: { to: "red" }
     }
   }
 }
@@ -65,23 +71,23 @@ const trafficLightSchema = {
 ### 2. Inisialisasi FSM
 
 ```typescript
-// Mode loose (default) - tidak melakukan validasi skema
-const fsm = new StatelessFSM(trafficLightSchema, { mode: 'loose' })
+import { StatelessFSM } from "stateflowguard"
 
-// Mode strict - melakukan validasi skema saat inisialisasi
+const fsm = new StatelessFSM(trafficLightSchema, { mode: 'loose' })
 const strictFsm = new StatelessFSM(trafficLightSchema, { mode: 'strict' })
 ```
 
 ### 3. Gunakan FSM
 
 ```typescript
-// Transisi dari state red ke green
 const result = fsm.transition({
   event: "NEXT",
   stateContext: { power: "on" },
   eventContext: { time: "day" }
 })
 ```
+
+---
 
 ## Struktur Schema
 
@@ -91,14 +97,14 @@ const result = fsm.transition({
 {
   transition: {
     [eventName: string]: {
-      to: string,                    // State tujuan
-      eventGuard?: {                 // Guard untuk event (opsional)
-        allow?: { ... },             // Kondisi yang harus dipenuhi
-        not?: { ... }                // Kondisi yang harus dihindari
+      to: string,
+      eventGuard?: {
+        allow?: { ... },
+        not?: { ... }
       }
     }
   },
-  stateguard?: {                     // Guard untuk state (opsional)
+  stateguard?: {
     allow?: { ... },
     not?: { ... }
   }
@@ -110,44 +116,40 @@ const result = fsm.transition({
 ```typescript
 {
   [key: string]: {
-    value: any[],                      // Nilai yang akan dibandingkan
-    mode: 'equal' | 'intersect' | 'subset'  // Mode perbandingan
+    value: any[],
+    mode: 'equal' | 'intersect' | 'subset'
   }
 }
 ```
 
+---
+
 ## Guard Modes
 
-### 1. Equal
-Membandingkan nilai secara strict equality
+### 1. `equal`
 ```typescript
 allow: {
   status: { value: ["active"], mode: "equal" }
 }
-// Hanya cocok jika status === "active"
 ```
 
-### 2. Intersect
-Memeriksa apakah ada irisan antara dua array
+### 2. `intersect`
 ```typescript
 allow: {
   roles: { value: ["admin", "editor"], mode: "intersect" }
 }
-// Cocok jika user memiliki salah satu dari role tersebut
 ```
 
-### 3. Subset
-Memeriksa apakah nilai adalah subset dari array yang diberikan
+### 3. `subset`
 ```typescript
 allow: {
   permissions: { value: ["read", "write", "delete"], mode: "subset" }
 }
-// Cocok jika semua permissions user ada dalam array tersebut
 ```
 
-## Contoh Penggunaan Advanced
+---
 
-### Workflow Approval System
+## Contoh Penggunaan Lanjutan
 
 ```typescript
 const approvalSchema = {
@@ -197,53 +199,36 @@ const approvalSchema = {
         to: "published",
         eventGuard: {
           allow: {
-            userRole: { value: "admin", mode: "equal" }
+            userRole: { value: ["admin"], mode: "equal" }
           }
         }
       }
     }
   },
-  published: {
-    transition: {}
-  }
+  published: { transition: {} }
 }
 
-const fsm = new StatelessFSM(approvalSchema, 'strict')
-
-// Penggunaan
-const result = fsm.transition({
-  event: "SUBMIT",
-  stateContext: { archived: false },
-  eventContext: { 
-    userRole: ["author"],
-    status: "ready"
-  }
-})
+const fsm = new StatelessFSM(approvalSchema, { mode: 'strict' })
 ```
+
+---
 
 ## Mode Operasi
 
-### Loose Mode (Default)
-- Tidak melakukan validasi skema saat inisialisasi
-- Lebih cepat dan fleksibel
-- Cocok untuk development atau schema yang dinamis
+| Mode | Deskripsi | Kegunaan |
+|------|------------|----------|
+| **Loose (default)** | Tidak validasi schema, cepat & fleksibel | Cocok untuk development |
+| **Strict** | Validasi schema penuh di awal | Cocok untuk production |
 
-### Strict Mode
-- Melakukan validasi skema lengkap saat inisialisasi
-- Menangkap error lebih awal
-- Cocok untuk production atau schema yang tetap
+---
 
 ## API Reference
 
 ### Constructor
 
 ```typescript
-constructor(transition: T, mode: 'strict'|'loose' = 'loose')
+constructor(transition: T, options?: { mode?: 'strict' | 'loose' })
 ```
-
-**Parameters:**
-- `transition`: State schema yang mendefinisikan FSM
-- `mode`: Mode validasi ('strict' atau 'loose')
 
 ### Methods
 
@@ -255,23 +240,30 @@ transition(request: {
 })
 ```
 
-**Parameters:**
-- `event`: Nama event yang akan ditrigger
-- `stateContext`: Context dari state saat ini (untuk state guard)
-- `eventContext`: Context dari event (untuk event guard)
+---
 
 ## Best Practices
 
-1. **Gunakan Strict Mode di Production**: Untuk menangkap error lebih awal
-2. **Definisikan Guard dengan Jelas**: Pastikan guard conditions mudah dipahami
-3. **Dokumentasikan States**: Berikan komentar untuk setiap state dan transisi
-4. **Pisahkan Logic**: Jangan masukkan business logic kompleks dalam guard
-5. **Test Thoroughly**: Test semua path transisi yang mungkin
+1. Gunakan **Strict Mode** di production.  
+2. Definisikan **guard** secara eksplisit dan jelas.  
+3. Dokumentasikan setiap **state & transition**.  
+4. Pisahkan **business logic** dari guard.  
+5. **Uji semua path transisi** menggunakan unit test.  
+
+---
 
 ## License
 
-MIT
+Licensed under the [ISC License](LICENSE).
+
+---
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Kontribusi sangat disambut!  
+Silakan buka [Pull Request](https://github.com/dralius97/stateflowguard/pulls) atau laporkan issue di [GitHub](https://github.com/dralius97/stateflowguard/issues).
+
+---
+
+### Repository
+➡️ [https://github.com/dralius97/stateflowguard](https://github.com/dralius97/stateflowguard)
