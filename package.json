@@ -2,7 +2,7 @@
   "name": "stateflowguard",
   "version": "1.0.1",
   "description": "",
-  "license": "0BSD",
+  "license": "ISC",
   "author": "Candra Julius",
   "main": "./dist/main.js",
   "module": "./dist/main.mjs",
