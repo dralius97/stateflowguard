@@ -1,6 +1,6 @@
 import EventEmitter from "node:events";
 import { FSMError } from "../../error"
-import { Context, EventOfStateless, ExecutionMode, Mode, Option, StatelessSchema, TransitionResult } from "../../types"
+import { AllEventsOf, Context, EventOfStateless, ExecutionMode, Mode, Option, StatelessSchema, TransitionResult } from "../../types"
 import { FSMCore } from "../core/fsmcore"
 import { FSMCache } from "../cache/cache";
 import { Helpers } from "../core/helpers";
@@ -45,7 +45,7 @@ export class StatelessFSM<T extends StatelessSchema> extends EventEmitter {
         if (ctx.eventContext && !this.common.isObject(ctx.eventContext)) throw new FSMError('Schema Invalid', 'REQUEST_ERROR', `EventContext must be an object`);
         if (ctx.stateContext && !this.common.isObject(ctx.stateContext)) throw new FSMError('Schema Invalid', 'REQUEST_ERROR', `StateContext must be an object`);
     }
-    public validate<K extends keyof T>(currState: K, ctx: Context & { event: EventOfStateless<T, K> })
+    public validate<K extends keyof T>(currState: K, ctx: Context & { event: AllEventsOf<T> })
         : TransitionResult {
         try {
             if (this.mode === 'strict') this.requestValidator(ctx);
