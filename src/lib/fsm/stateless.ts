@@ -1,6 +1,6 @@
 import EventEmitter from "node:events";
 import { FSMError } from "../../error"
-import { AllEventsOf, Context, EventOfStateless, ExecutionMode, Mode, Option, StatelessSchema, TransitionResult } from "../../types"
+import { AllEventsOf, Context, ExecutionMode, Mode, Option, StatelessSchema, TransitionResult } from "../../types"
 import { FSMCore } from "../core/fsmcore"
 import { FSMCache } from "../cache/cache";
 import { Helpers } from "../core/helpers";
