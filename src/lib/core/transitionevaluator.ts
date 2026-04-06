@@ -69,12 +69,12 @@ export class TransitionEvaluator<T extends StatelessSchema> {
         if (Array.isArray(val.value)) {
           if (this.deepValidation(val.value, ctxVal, val.mode ?? 'equal')) {
             const message = val.failMessage ? val.failMessage : `Guard /not failed: ${key}`
-            return { isValid: false, message: message, reason: `${ctxVal} == ${val.value}`, code: 'VALIDATION_ERROR' };
+            return { isValid: false, message: message, reason: `${key} must not ${ctxVal}`, code: 'VALIDATION_ERROR' };
           }
         }
         else if (ctxVal === val.value) {
           const message = val.failMessage ? val.failMessage : `Guard /not failed: ${key}`
-          return { isValid: false, message: message, reason: JSON.stringify(`${ctxVal} == ${val.value}`), code: 'VALIDATION_ERROR' };
+          return { isValid: false, message: message, reason: `${key} must not ${ctxVal}`, code: 'VALIDATION_ERROR' };
         }
       }
     }
