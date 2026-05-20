@@ -1,4 +1,7 @@
 # StateFlowGuard
+[![npm version](https://img.shields.io/npm/v/stateflowguard)](https://www.npmjs.com/package/stateflowguard)
+[![npm downloads](https://img.shields.io/npm/dm/stateflowguard)](https://www.npmjs.com/package/stateflowguard)
+
 
 StateFlowGuard is a lightweight, schema-driven Determined Finite State Machine (FSM) engine built for Node.js and TypeScript.  
 It supports both **stateless** and **stateful** FSM models, with optional caching and validation layers for optimized control flow management.
